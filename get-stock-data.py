@@ -33,61 +33,6 @@ def print_use_and_exit():
     print(__doc__)
     sys.exit(1)
 
-def main(argv):
-    print_use_and_exit()
-    if len(argv)>3:
-        print('Command error, please use this command like following:')
-        print_use_and_exit()
-    elif len(argv)<=1:
-        ONLY_TODAY = True
-        ALL_DATA = False
-    elif len(argv)==2:
-        if ('-' in argv[1]) and ('h' in argv[1]):
-            print_use_and_exit()
-        elif argv[1] == 'today':
-            ONLY_TODAY = True
-            ALL_DATA = False
-        elif argv[1] == 'all':
-            ONLY_TODAY = False
-            ALL_DATA = True
-        else:
-            ONLY_TODAY = False
-            ALL_DATA = False
-            SPECIAL_DATE.append(argv[1])
-    else: #len(argv)==3
-        ONLY_TODAY = False
-        ALL_DATA = False
-        t = argv[1].split('-')
-        startday = datetime.date(int(t[0]),int(t[1]),int(t[2]))
-        t = argv[2].split('-')
-        endday = datetime.date(int(t[0]),int(t[1]),int(t[2]))
-        r = (endday-startday).days +1
-        for i in range(r):
-            d = startday+datetime.timedelta(i)
-            SPECIAL_DATE.append(d.isoformat())
-
-if __name__ == '__main__':
-    main(sys.argv)
-
-
-
-today = datetime.date.today().isoformat()
-
-if ONLY_TODAY :
-    SPECIAL_DATE.append(today)
-
-
-if ALL_DATA:
-    LIST_FN = 'all-list-{0}.csv'.format(today)
-    DETAIL_FN = 'all-detail-{0}.csv'.format(today)
-elif len(SPECIAL_DATE)==1:
-    LIST_FN = '{0}-list.csv'.format(SPECIAL_DATE[0])
-    DETAIL_FN = '{0}-detail.csv'.format(SPECIAL_DATE[0])
-else:
-    [x,*_,y] = SPECIAL_DATE
-    LIST_FN = '{0}--{1}-list.csv'.format(x,y)
-    DETAIL_FN = '{0}--{1}-detail.csv'.format(x,y)
-
 def convertFloat(i):
     try:
         return False,'%.2f' % float(i)
@@ -135,7 +80,7 @@ class MyHTMLParser(HTMLParser):
             self.tbody = True
             #print('start tbody')
         elif self.tbody and tag == 'tr': #start line
-            self.line.clear()
+            del self.line[:]
             direc = '卖出金额最大的前5名'
             if self.isin:
                 direc = '买入金额最大的前5名'
@@ -225,8 +170,6 @@ def get_stock_detail(date,code,name,atype,detailfile):
     parser.feed(content)
     #print('FINISH ONE PAGE')
 
-
-
 def proc_content(content):
     global PAGES,ONLY_TODAY,ALL_DATA,SPECIAL_DATE,LIST_FN,DETAIL_FN,EXITFLAG,CURRENT_PAGE_NUM,SAVED
     listfile = []
@@ -261,7 +204,7 @@ def proc_content(content):
         listfile.append(detail)
         print('Reading stock detail for {0} {1} {2}'.format(name, date, atype))
         get_stock_detail(date, code, name, atype, detailfile)
-        if ALL_DATA: 
+        if ALL_DATA:
             print('Finish stock detail for {0}\t\t\t\t....{1}%'.format(name, int(float(CURRENT_PAGE_NUM)*100/float(PAGES))))
         else:
             print('Finish stock detail for {0}'.format(name))
@@ -278,49 +221,95 @@ def proc_content(content):
             w = csv.writer(csvfile)
             w.writerows(detailfile)
 
-
-with open(LIST_FN, 'w', newline='', encoding='gbk') as csvfile:
-    w = csv.writer(csvfile)
-    w.writerow(['类型','机构席位卖出(万)','代码','机构席位买入(万)','股票名称','交易日期'])
-with open(DETAIL_FN, 'w', newline='', encoding='gbk') as csvfile:
-    w = csv.writer(csvfile)
-    w.writerow(['交易日期','股票名称','代码','类型','买卖方向','序号','交易营业部名称','买入金额(万)','占总成交比例','卖出金额(万)','占总成交比例','净额(万)'])
-
-while True:
-    if EXITFLAG:
-        exit()
-
-    url = "http://datainterface.eastmoney.com/EM_DataCenter/JS.aspx?type=LHB&sty=JGXWMX&p={0}&ps=100&js=(x),,,pages:(pc),,,update:(ud)".format(CURRENT_PAGE_NUM)
-
-    if PAGES > 0:
-        print('Reading page {0}/{1}, 100 lines per page.'.format(CURRENT_PAGE_NUM,PAGES))
-    else:
-        print('Reading page {0}, 100 lines per page.'.format(CURRENT_PAGE_NUM))
-    CURRENT_PAGE_NUM = CURRENT_PAGE_NUM + 1
-    
-    content = ''
-    success = False
-    while not success:
-        try:
-            with urllib.request.urlopen(url, timeout=10) as response:
-                body = response.read()
-                content = body.decode('utf_8')
-        except urllib.error.HTTPError:
-            print('HTTP Error.')
-            time.sleep(1)
-        except urllib.error.URLError:
-            print('URL Error.')
-            time.sleep(1)
-        except timeout:
-            print('Timeout.')
-            time.sleep(1)
-        except:
-            print('Other exception.')
-            time.sleep(1)
+def main(argv):
+    global PAGES,ONLY_TODAY,ALL_DATA,SPECIAL_DATE,LIST_FN,DETAIL_FN,EXITFLAG,CURRENT_PAGE_NUM
+    if len(argv)>3:
+        print('Command error, please use this command like following:')
+        print_use_and_exit()
+    elif len(argv)<=1:
+        ONLY_TODAY = True
+        ALL_DATA = False
+    elif len(argv)==2:
+        if ('-' in argv[1]) and ('h' in argv[1]):
+            print_use_and_exit()
+        elif argv[1] == 'today':
+            ONLY_TODAY = True
+            ALL_DATA = False
+        elif argv[1] == 'all':
+            ONLY_TODAY = False
+            ALL_DATA = True
         else:
-            success = True
+            ONLY_TODAY = False
+            ALL_DATA = False
+            SPECIAL_DATE.append(argv[1])
+    else: #len(argv)==3
+        ONLY_TODAY = False
+        ALL_DATA = False
+        t = argv[1].split('-')
+        startday = datetime.date(int(t[0]),int(t[1]),int(t[2]))
+        t = argv[2].split('-')
+        endday = datetime.date(int(t[0]),int(t[1]),int(t[2]))
+        r = (endday-startday).days +1
+        for i in range(r):
+            d = startday+datetime.timedelta(i)
+            SPECIAL_DATE.append(d.isoformat())
+    today = datetime.date.today().isoformat()
+    if ONLY_TODAY :
+        SPECIAL_DATE.append(today)
+    if ALL_DATA:
+        LIST_FN = 'all-list-{0}.csv'.format(today)
+        DETAIL_FN = 'all-detail-{0}.csv'.format(today)
+    elif len(SPECIAL_DATE)==1:
+        LIST_FN = '{0}-list.csv'.format(SPECIAL_DATE[0])
+        DETAIL_FN = '{0}-detail.csv'.format(SPECIAL_DATE[0])
+    else:
+        [x,*_,y] = SPECIAL_DATE
+        LIST_FN = '{0}--{1}-list.csv'.format(x,y)
+        DETAIL_FN = '{0}--{1}-detail.csv'.format(x,y)
+    with open(LIST_FN, 'w', newline='', encoding='gbk') as csvfile:
+        w = csv.writer(csvfile)
+        w.writerow(['类型','机构席位卖出(万)','代码','机构席位买入(万)','股票名称','交易日期'])
+    with open(DETAIL_FN, 'w', newline='', encoding='gbk') as csvfile:
+        w = csv.writer(csvfile)
+        w.writerow(
+                ['交易日期','股票名称','代码','类型',
+                 '买卖方向','序号','交易营业部名称','买入金额(万)',
+                 '占总成交比例','卖出金额(万)','占总成交比例','净额(万)'])
 
-    proc_content(content)
-    if CURRENT_PAGE_NUM>PAGES:
-        break
+    while True:
+        if EXITFLAG:
+            sys.exit(1)
+        url = "http://datainterface.eastmoney.com/EM_DataCenter/JS.aspx?type=LHB&sty=JGXWMX&p={0}&ps=100&js=(x),,,pages:(pc),,,update:(ud)".format(CURRENT_PAGE_NUM)
+        if PAGES > 0:
+            print('Reading page {0}/{1}, 100 lines per page.'.format(CURRENT_PAGE_NUM,PAGES))
+        else:
+            print('Reading page {0}, 100 lines per page.'.format(CURRENT_PAGE_NUM))
+        CURRENT_PAGE_NUM = CURRENT_PAGE_NUM + 1
+        content = ''
+        success = False
+        while not success:
+            try:
+                with urllib.request.urlopen(url, timeout=10) as response:
+                    body = response.read()
+                    content = body.decode('utf_8')
+            except urllib.error.HTTPError:
+                print('HTTP Error.')
+                time.sleep(1)
+            except urllib.error.URLError:
+                print('URL Error.')
+                time.sleep(1)
+            except timeout:
+                print('Timeout.')
+                time.sleep(1)
+            except:
+                print('Other exception.')
+                time.sleep(1)
+            else:
+                success = True
+        proc_content(content)
+        if CURRENT_PAGE_NUM>PAGES:
+            break
+
+if __name__ == '__main__':
+    main(sys.argv)
 
