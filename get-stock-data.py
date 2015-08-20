@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
 
+"""------------------Simple Use Guild----------------------------
+"get-stock-data.py today" | "get-stock-data.py": will fetch data only for today. The parameter "today" can be ignor.
+"get-stock-data.py all": wil fetch all datas. It will take very long time.
+"get-stock-data.py SPECIAL_DATE": will fetch data only for the special date. The formate for date is yyyy-mm-dd, for example 2015-06-08
+"get-stock-data.py START_DATE END_DATE": will fetch data from START_DATE to END_DATE. The formate for date is yyyy-mm-dd, for example 2015-06-08. START_DATE must be earlier than END_DATE
+--------------------------------------------------------------
+"""
+
 __author__ = 'scott.cong.zhou@gmail.com (Scott Zhou)'
 
 import sys
@@ -22,46 +30,44 @@ CURRENT_PAGE_NUM = 1
 SAVED = {}
 
 def print_use_and_exit():
-    print('--------------------------------------------------------------')
-    print('"get-stock-data.py today" | "get-stock-data.py": will fetch data only for today. The parameter "today" can be ignor.')
-    print('"get-stock-data.py all": wil fetch all datas. It will take very long time.')
-    print('"get-stock-data.py SPECIAL_DATE": will fetch data only for the special date. The formate for date is yyyy-mm-dd, for example 2015-06-08')
-    print('"get-stock-data.py START_DATE END_DATE": will fetch data from START_DATE to END_DATE. The formate for date is yyyy-mm-dd, for example 2015-06-08. START_DATE must be earlier than END_DATE')
-    print('--------------------------------------------------------------')
-    print('')
-    exit()
+    print(__doc__)
+    sys.exit(1)
 
-
-if len(sys.argv)>3:
-    print('Command error, please use this command like following:')
+def main(argv):
     print_use_and_exit()
-elif len(sys.argv)<=1:
-    ONLY_TODAY = True
-    ALL_DATA = False
-elif len(sys.argv)==2:
-    if ('-' in sys.argv[1]) and ('h' in sys.argv[1]):
+    if len(argv)>3:
+        print('Command error, please use this command like following:')
         print_use_and_exit()
-    elif sys.argv[1] == 'today':
+    elif len(argv)<=1:
         ONLY_TODAY = True
         ALL_DATA = False
-    elif sys.argv[1] == 'all':
-        ONLY_TODAY = False
-        ALL_DATA = True
-    else:
+    elif len(argv)==2:
+        if ('-' in argv[1]) and ('h' in argv[1]):
+            print_use_and_exit()
+        elif argv[1] == 'today':
+            ONLY_TODAY = True
+            ALL_DATA = False
+        elif argv[1] == 'all':
+            ONLY_TODAY = False
+            ALL_DATA = True
+        else:
+            ONLY_TODAY = False
+            ALL_DATA = False
+            SPECIAL_DATE.append(argv[1])
+    else: #len(argv)==3
         ONLY_TODAY = False
         ALL_DATA = False
-        SPECIAL_DATE.append(sys.argv[1])
-else: #len(sys.argv)==3
-    ONLY_TODAY = False
-    ALL_DATA = False
-    t = sys.argv[1].split('-')
-    startday = datetime.date(int(t[0]),int(t[1]),int(t[2]))
-    t = sys.argv[2].split('-')
-    endday = datetime.date(int(t[0]),int(t[1]),int(t[2]))
-    r = (endday-startday).days +1
-    for i in range(r):
-        d = startday+datetime.timedelta(i)
-        SPECIAL_DATE.append(d.isoformat())
+        t = argv[1].split('-')
+        startday = datetime.date(int(t[0]),int(t[1]),int(t[2]))
+        t = argv[2].split('-')
+        endday = datetime.date(int(t[0]),int(t[1]),int(t[2]))
+        r = (endday-startday).days +1
+        for i in range(r):
+            d = startday+datetime.timedelta(i)
+            SPECIAL_DATE.append(d.isoformat())
+
+if __name__ == '__main__':
+    main(sys.argv)
 
 
 
