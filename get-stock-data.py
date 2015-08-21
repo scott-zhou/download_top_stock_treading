@@ -221,30 +221,32 @@ def proc_content(content):
             w = csv.writer(csvfile)
             w.writerows(detailfile)
 
-def main(argv):
-    global PAGES,ONLY_TODAY,ALL_DATA,SPECIAL_DATE,LIST_FN,DETAIL_FN,EXITFLAG,CURRENT_PAGE_NUM
+def analysis_argv(argv):
+    only_today = True
+    all_data = False
+    special_date = []
     if len(argv)>3:
         print('Command error, please use this command like following:')
         print_use_and_exit()
     elif len(argv)<=1:
-        ONLY_TODAY = True
-        ALL_DATA = False
+        only_today = True
+        all_data = False
     elif len(argv)==2:
         if ('-' in argv[1]) and ('h' in argv[1]):
             print_use_and_exit()
         elif argv[1] == 'today':
-            ONLY_TODAY = True
-            ALL_DATA = False
+            only_today = True
+            all_data = False
         elif argv[1] == 'all':
-            ONLY_TODAY = False
-            ALL_DATA = True
+            only_today = False
+            all_data = True
         else:
-            ONLY_TODAY = False
-            ALL_DATA = False
-            SPECIAL_DATE.append(argv[1])
+            only_today = False
+            all_data = False
+            special_date.append(argv[1])
     else: #len(argv)==3
-        ONLY_TODAY = False
-        ALL_DATA = False
+        only_today = False
+        all_data = False
         t = argv[1].split('-')
         startday = datetime.date(int(t[0]),int(t[1]),int(t[2]))
         t = argv[2].split('-')
@@ -252,10 +254,16 @@ def main(argv):
         r = (endday-startday).days +1
         for i in range(r):
             d = startday+datetime.timedelta(i)
-            SPECIAL_DATE.append(d.isoformat())
+            special_date.append(d.isoformat())
     today = datetime.date.today().isoformat()
-    if ONLY_TODAY :
-        SPECIAL_DATE.append(today)
+    if only_today :
+        special_date.append(today)
+    return only_today, all_data, special_date
+
+def main(argv):
+    global PAGES,ONLY_TODAY,ALL_DATA,SPECIAL_DATE,LIST_FN,DETAIL_FN,EXITFLAG,CURRENT_PAGE_NUM
+    ONLY_TODAY, ALL_DATA, SPECIAL_DATE = analysis_argv(argv)
+    today = datetime.date.today().isoformat()
     if ALL_DATA:
         LIST_FN = 'all-list-{0}.csv'.format(today)
         DETAIL_FN = 'all-detail-{0}.csv'.format(today)
